@@ -6,11 +6,13 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\InertiaTestController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\CustomerController;
 
 Route::get('/inertia-test', function () {
     return Inertia::render('InertiaTest');
     }
 );
+Route::resource('customers', CustomerController::class)->middleware(['auth', 'verified']);
 
 Route::get('/inertia/index', [InertiaTestController::class, 'index'])->name('inertia.index');
 Route::get('/inertia/show/{id}', [InertiaTestController::class, 'show'])->name('inertia.show');
