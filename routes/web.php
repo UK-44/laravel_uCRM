@@ -5,11 +5,14 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\InertiaTestController;
+use App\Http\Controllers\ItemController;
+use App\Http\Controllers\CustomerController;
 
 Route::get('/inertia-test', function () {
     return Inertia::render('InertiaTest');
     }
 );
+Route::resource('customers', CustomerController::class)->middleware(['auth', 'verified']);
 
 Route::get('/inertia/index', [InertiaTestController::class, 'index'])->name('inertia.index');
 Route::get('/inertia/show/{id}', [InertiaTestController::class, 'show'])->name('inertia.show');
@@ -41,5 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::resource('items', ItemController::class)->middleware(['auth', 'verified']);
 
 require __DIR__.'/auth.php';
