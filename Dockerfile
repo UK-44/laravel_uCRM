@@ -1,18 +1,5 @@
 FROM php:8.2.12-fpm
 
-RUN apk add openssh \
-     && echo "root:Docker!" | chpasswd 
-
-COPY sshd_config /etc/ssh/
-# Copy and configure the ssh_setup file
-
-RUN mkdir -p /tmp
-COPY ssh_setup.sh /tmp
-RUN chmod +x /tmp/ssh_setup.sh \
-    && (sleep 1;/tmp/ssh_setup.sh 2>&1 > /dev/null)
-
-EXPOSE 2222
-
 # COPY php.ini
 # COPY ./docker/local/php.ini /usr/local/etc/php/php.ini
 COPY ./docker/local/php.ini /usr/local/etc/php/php.ini
