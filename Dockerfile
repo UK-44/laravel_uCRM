@@ -1,22 +1,44 @@
-FROM php:8.2.12-fpm
+# Stage 1: フロントエンドビルド
+FROM node:16-alpine as build
 
-# COPY php.ini
-# COPY ./docker/local/php.ini /usr/local/etc/php/php.ini
-COPY ./docker/local/php.ini /usr/local/etc/php/php.ini
+# 作業ディレクトリを /app にする
+WORKDIR /app
 
-# Composer install
-COPY --from=composer:2.0 /usr/bin/composer /usr/bin/composer
+# package.json, lockファイルなどを先にコピーしてnpm install
+COPY package*.json ./
+RUN npm install
 
-# install Node.js
-COPY --from=node:22.12.0 /usr/local/bin /usr/local/bin
-COPY --from=node:22.12.0 /usr/local/lib /usr/local/lib
+# Vite関連ファイルやソースをコピーしてビルド
+COPY vite.config.js ./
+COPY resources/js resources/js
+COPY resources/css resources/css
+RUN npm run build
 
-RUN apt-get update && \
-    apt-get -y install \
-    git \
-    zip \
-    unzip \
-    vim \
-    && docker-php-ext-install pdo_mysql bcmath
+# Stage 2: 本番用PHPイメージ
+FROM php:8.1-fpm-alpine
 
+# 必要なPHP拡張インストール
+RUN docker-php-ext-install pdo_mysql bcmath
+
+# 作業ディレクトリ
 WORKDIR /var/www/html
+
+# ソースコードをコピー
+COPY . /var/www/html
+
+# フロントエンドのビルド成果物を Stage1 からコピー (public/buildなど)
+COPY --from=build /app/public/build /var/www/html/public/build
+
+# Composerインストール
+RUN apk add --no-cache git unzip \
+    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+    && composer install --no-dev --optimize-autoloader
+
+# 本番向けphp.iniをコピー (エラー表示などはオフに)
+COPY docker/production/php.ini /usr/local/etc/php/php.ini
+
+# キャッシュ等の書き込み権限を整える
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+EXPOSE 9000
+CMD ["php-fpm"]
