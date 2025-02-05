@@ -8,8 +8,7 @@ services:
     volumes:
       - ./:/var/www/html
     ports:
-      - "9000:9000"
-      - "8000:8000"
+      - "9000"   # 内部ネットワークで php-fpm ポートを公開
     env_file:
       - .env
     depends_on:
