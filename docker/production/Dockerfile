@@ -1,44 +1,51 @@
-# Stage 1: フロントエンドビルド
-FROM node:16-alpine as build
-
-# 作業ディレクトリを /app にする
+# ビルドステージ：Composerを使用してPHP依存関係をインストール
+FROM composer:2.5 AS build
 WORKDIR /app
+COPY . /app/
+RUN composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
 
-# package.json, lockファイルなどを先にコピーしてnpm install
-COPY package*.json ./
-RUN npm install
+# 本番ステージ：PHP-FPMとNode.jsを設定
+FROM php:8.2.12-fpm AS production
 
-# Vite関連ファイルやソースをコピーしてビルド
-COPY vite.config.js ./
-COPY resources/js resources/js
-COPY resources/css resources/css
-RUN npm run build
+ENV APP_ENV=production
+ENV APP_DEBUG=false
 
-# Stage 2: 本番用PHPイメージ
-FROM php:8.1-fpm-alpine
+# 必要なシステムパッケージおよびPHP拡張モジュールのインストール
+RUN apt-get update && \
+    apt-get -y install \
+      git \
+      zip \
+      unzip \
+      vim \
+      nodejs \
+      npm && \
+    docker-php-ext-install pdo_mysql bcmath && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
-# 必要なPHP拡張インストール
-RUN docker-php-ext-install pdo_mysql bcmath
-
-# 作業ディレクトリ
+# 作業ディレクトリの設定
 WORKDIR /var/www/html
 
-# ソースコードをコピー
-COPY . /var/www/html
-
-# フロントエンドのビルド成果物を Stage1 からコピー (public/buildなど)
-COPY --from=build /app/public/build /var/www/html/public/build
-
-# Composerインストール
-RUN apk add --no-cache git unzip \
-    && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer install --no-dev --optimize-autoloader
-
-# 本番向けphp.iniをコピー (エラー表示などはオフに)
+# PHP設定ファイルのコピー
 COPY docker/production/php.ini /usr/local/etc/php/php.ini
 
-# キャッシュ等の書き込み権限を整える
-RUN chown -R www-data:www-data storage bootstrap/cache
+# ビルドステージからアプリケーションコードをコピー
+COPY --from=build /app /var/www/html
 
+# .envファイルのコピー
+COPY .env /var/www/html/.env
+
+# Node.jsの依存関係をインストールし、フロントエンド資産をビルド
+RUN npm install && npm run prod
+
+# Laravelのキャッシュを生成し、適切な権限を設定
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    chmod -R 755 /var/www/html/storage/ && \
+    chown -R www-data:www-data /var/www/html
+
+# PHP-FPMがポート9000で待機
 EXPOSE 9000
+
+# コンテナ起動時にPHP-FPMを実行
 CMD ["php-fpm"]
