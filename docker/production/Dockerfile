@@ -4,10 +4,9 @@ WORKDIR /app
 COPY . /app/
 
 # 環境変数設定した後にcomposer install しないとエラーになる
-RUN apk update && apk add --no-cache musl-locales musl-locales-lang && \
-    export LANG=ja_JP.UTF-8 && \
-    export LANGUAGE=ja_JP:ja && \
-    export LC_ALL=ja_JP.UTF-8 && \
+RUN export APP_LOCALE=ja && \
+    export APP_FALLBACK_LOCALE=en && \
+    export APP_FAKER_LOCALE=ja_JP && \
     composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
 
     
