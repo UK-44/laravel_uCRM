@@ -2,7 +2,12 @@
 FROM composer:2.5 AS composer_build
 WORKDIR /app
 COPY . /app/
-RUN composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
+
+# 環境変数設定した後にcomposer install しないとエラーになる
+RUN export APP_LOCALE=ja && \
+    export APP_FALLBACK_LOCALE=en && \
+    export APP_FAKER_LOCALE=ja_JP && \
+    composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
 
 # === Node を利用してフロントエンド資産をビルドするステージ ===
 FROM node:22 AS node_build
@@ -33,8 +38,8 @@ COPY docker/production/nginx.conf /etc/nginx/nginx.conf
 # ※ node_build ステージで npm run prod により、public/ などのアセットが生成されている前提
 COPY --from=node_build /app /var/www/html
 
-# .env ファイルをコピー（プロダクション用の内容）
-COPY .env /var/www/html/.env
+# .env ファイルをコピー（秘匿したい値はapp service側で管理）
+COPY .env.example /var/www/html/.env
 
 # Laravel のキャッシュ生成とパーミッションの設定
 RUN php artisan config:cache && \
