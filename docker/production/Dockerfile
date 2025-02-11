@@ -2,8 +2,17 @@
 FROM composer:2.5 AS composer_build
 WORKDIR /app
 COPY . /app/
-RUN composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
 
+# 環境変数設定した後にcomposer install しないとエラーになる
+RUN apt-get update && apt-get install -y locales && \
+    sed -i -e 's/# ja_JP.UTF-8 UTF-8/ja_JP.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen && \
+    update-locale LANG=ja_JP.UTF-8 && \
+    export LANG=ja_JP.UTF-8 && \
+    export LANGUAGE=ja_JP:ja && \
+    export LC_ALL=ja_JP.UTF-8 && \
+    composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
+    
 # === Node を利用してフロントエンド資産をビルドするステージ ===
 FROM node:22 AS node_build
 WORKDIR /app
