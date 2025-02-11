@@ -9,7 +9,6 @@ RUN export APP_LOCALE=ja && \
     export APP_FAKER_LOCALE=ja_JP && \
     composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
 
-    
 # === Node を利用してフロントエンド資産をビルドするステージ ===
 FROM node:22 AS node_build
 WORKDIR /app
