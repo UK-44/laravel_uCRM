@@ -33,8 +33,8 @@ COPY docker/production/nginx.conf /etc/nginx/nginx.conf
 # ※ node_build ステージで npm run prod により、public/ などのアセットが生成されている前提
 COPY --from=node_build /app /var/www/html
 
-# .env ファイルをコピー（プロダクション用の内容）
-# COPY .env /var/www/html/.env
+# .env ファイルをコピー（秘匿したい値はapp service側で管理）
+COPY .env.example /var/www/html/.env
 
 # Laravel のキャッシュ生成とパーミッションの設定
 RUN php artisan config:cache && \
