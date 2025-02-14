@@ -46,12 +46,20 @@ RUN php artisan config:cache && \
     php artisan route:cache && \
     chmod -R 755 /var/www/html/storage/ && \
     chown -R www-data:www-data /var/www/html
-
-# コンテナがリッスンするポート（Nginx：80）
-EXPOSE 80
-
+    
 # プロダクション用 entrypoint スクリプトのコピー
 COPY docker/production/entrypoint.sh /entrypoint.sh
+
+# Start and enable SSH
+RUN apt-get update \
+&& apt-get install -y --no-install-recommends dialog \
+&& apt-get install -y --no-install-recommends openssh-server \
+&& echo "root:Docker!" | chpasswd
+
 RUN chmod +x /entrypoint.sh
+COPY sshd_config /etc/ssh/
+
+# コンテナがリッスンするポート（Nginx：80）
+EXPOSE 80 2222
 
 ENTRYPOINT ["/entrypoint.sh"]
