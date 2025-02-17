@@ -1,4 +1,10 @@
 #!/bin/bash
+# キャッシュのクリア
+php artisan config:clear
+
+# 最新の環境変数でキャッシュを再生成
+php artisan config:cache
+
 set -e
 
 # PHP-FPM をバックグラウンドで起動
