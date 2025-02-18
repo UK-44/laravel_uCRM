@@ -24,13 +24,13 @@ jobs:
         username: ${{ secrets.REGISTRY_USERNAME }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
     - run: |
-        docker build . -t azuredeployrunnerregi.azurecr.io/laravel_ucrm_app:${{ github.sha }} -f ./docker/production/Dockerfile
-        docker push azuredeployrunnerregi.azurecr.io/laravel_ucrm_app:${{ github.sha }}     
+        docker build . -t azuredeployrunnerregi.azurecr.io/laravel_ucrm_app:main -f ./docker/production/Dockerfile
+        docker push azuredeployrunnerregi.azurecr.io/laravel_ucrm_app:main
 
     - uses: azure/webapps-deploy@v2
       with:
         app-name: 'laravel-deploy-test'
-        images: 'azuredeployrunnerregi.azurecr.io/laravel_ucrm_app:${{ github.sha }}'
+        images: 'azuredeployrunnerregi.azurecr.io/laravel_ucrm_app:main'
 
     - name: Azure logout
       run: |
