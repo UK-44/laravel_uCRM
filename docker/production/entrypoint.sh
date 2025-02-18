@@ -5,6 +5,10 @@ php artisan config:clear
 # 最新の環境変数でキャッシュを再生成
 php artisan config:cache
 
+# 証明書ダウンロード
+mkdir -p /home/site/wwwroot/ssl
+curl -o /home/site/wwwroot/ssl/DigiCertGlobalRootCA.crt.pem https://dl.cacerts.digicert.com/DigiCertGlobalRootCA.crt.pem
+
 set -e
 
 # PHP-FPM をバックグラウンドで起動
